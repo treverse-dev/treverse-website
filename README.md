@@ -48,6 +48,33 @@ Deploy only the contents of `dist/`. Node.js and React's build-time renderer run
 
 The app uses normal links and separate HTML entry points rather than client-side routing. Vite bundles React and copies public assets into `dist/`. Do not edit `dist/`; it is regenerated on each build. Changes to page titles/descriptions belong in the corresponding HTML entry point. The build pre-renders every page from the React components into HTML. Content, navigation, FAQs, and external links work before JavaScript loads; React hydrates the same markup in the browser. No server runtime or extra framework is deployed. The temporary build-time renderer is removed after each build.
 
+## Current deployment
+
+Created with the AWS CLI on September 29, 2026:
+
+- Bucket: `treverse-website-347888304949`
+- AWS account: `347888304949`
+- Region: `us-east-1`
+- CLI profile used: the configured **default** profile (no `--profile` flag).
+- Website: http://treverse-website-347888304949.s3-website-us-east-1.amazonaws.com/
+- Hosting: direct S3 website hosting, with `index.html` and `404.html` configured.
+- Access: public object reads through the bucket policy; public ACLs remain blocked and ACLs are disabled via BucketOwnerEnforced.
+- Custom domain / HTTPS: not connected; the existing Treverse domain is unchanged.
+
+To rebuild locally and update this bucket using the same configured AWS account:
+
+```sh
+aws sts get-caller-identity
+npm ci
+npm run check
+aws s3 sync dist/ s3://treverse-website-347888304949/ --exclude "*.html" --cache-control "no-cache" --region us-east-1 --no-progress
+aws s3 cp dist/ s3://treverse-website-347888304949/ --recursive --exclude "*" --include "*.html" --content-type "text/html; charset=utf-8" --cache-control "no-cache" --region us-east-1 --no-progress
+```
+
+Confirm the identity command reports account `347888304949`. If you move to a named profile, append `--profile YOUR_PROFILE` to the AWS commands. There is no CloudFront distribution to invalidate for this deployment. The exact website configuration and public-read policy are saved in `deploy/s3-website.json` and `deploy/s3-public-read-policy.json`; the policy is scoped to this bucket.
+
+The general instructions below remain available for setting up another bucket or moving to CloudFront.
+
 ## One-time AWS setup
 
 Choose one hosting option:
@@ -168,7 +195,7 @@ curl -I https://YOUR_DISTRIBUTION_DOMAIN/this-page-does-not-exist
 
 Use `http://` and the console-provided website hostname for direct S3 hosting. If all pages return 403, check the bucket policy/OAC and the uploaded object keys. If only nested pages fail through CloudFront, check the function's LIVE viewer-request association. If updates look stale, check the upload destination, cache policy, and invalidation status.
 
-The local build validates files, not your AWS permissions, DNS, or live hosting configuration. No AWS resources or domains have been modified by this repository's build commands.
+The local build validates files, not your AWS permissions, DNS, or live hosting configuration. Build commands never change AWS resources or domains; deployment requires the explicit AWS CLI commands above.
 
 ## Content and launch review
 
@@ -185,7 +212,7 @@ Pending owner information:
 2. Confirm the intended wording for Treverse's relationship to Haggle and A-Stock, any updated social accounts, and any location corrections.
 3. Supply approved facility/team photos and case-study metrics before adding customer outcomes or testimonials.
 
-The S3 build remains runnable while these editorial inputs are pending. No live domain, AWS resources, or external accounts have been changed.
+The S3 build remains runnable while these editorial inputs are pending. The current S3 deployment is documented above. The existing live domain and other external accounts remain unchanged.
 
 ## Asset provenance
 
