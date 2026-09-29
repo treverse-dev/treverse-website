@@ -1,0 +1,18 @@
+[
+  {
+    "name": "_b4581b275dfa961d12fc9e6fc8dbead8.www.treversellc.com.",
+    "type": "CNAME",
+    "ttl": 300,
+    "rrdatas": [
+      "_f9b3ed4e4dbee56ce4ea3b1a5235054c.wzccmgtwzk.acm-validations.aws."
+    ]
+  },
+  {
+    "name": "_1f221a8b0338070752c03dff328b98e0.treversellc.com.",
+    "type": "CNAME",
+    "ttl": 300,
+    "rrdatas": [
+      "_54aa10c25fd2209c12b833b44d270e3a.wzccmgtwzk.acm-validations.aws."
+    ]
+  }
+]

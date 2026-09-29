@@ -50,18 +50,22 @@ The app uses normal links and separate HTML entry points rather than client-side
 
 ## Current deployment
 
-Created with the AWS CLI on September 29, 2026:
+AWS resources created September 29, 2026:
 
-- Bucket: `treverse-website-347888304949`
-- AWS account: `347888304949`
-- Region: `us-east-1`
-- CLI profile used: the configured **default** profile (no `--profile` flag).
-- Website: http://treverse-website-347888304949.s3-website-us-east-1.amazonaws.com/
-- Hosting: direct S3 website hosting, with `index.html` and `404.html` configured.
-- Access: public object reads through the bucket policy; public ACLs remain blocked and ACLs are disabled via BucketOwnerEnforced.
-- Custom domain / HTTPS: not connected; the existing Treverse domain is unchanged.
+| Resource | Value |
+| --- | --- |
+| HTTPS website | https://d38l62u264f56m.cloudfront.net/ |
+| CloudFront distribution | `E1Y0INJRF5BAJA` |
+| S3 bucket | `treverse-website-347888304949` |
+| AWS account / region | `347888304949` / `us-east-1` |
+| CLI profile | Configured default profile (no `--profile` flag) |
+| Origin access control | `E4WJ5BQGIG4MY` |
+| Routing function | `treverse-website-routing` (LIVE, viewer-request) |
+| Custom domain | Apex validation succeeded; www validation and alias attachment pending; website DNS unchanged |
 
-To rebuild locally and update this bucket using the same configured AWS account:
+CloudFront redirects HTTP to HTTPS, resolves each static page route, and serves a custom 404. S3 access is restricted to this distribution through signed origin requests. The original public S3 website URL is no longer the delivery URL. The default CloudFront hostname has a working AWS-managed certificate; the Treverse-domain certificate has separate DNS validation below.
+
+### Deploy another local build
 
 ```sh
 aws sts get-caller-identity
@@ -69,11 +73,39 @@ npm ci
 npm run check
 aws s3 sync dist/ s3://treverse-website-347888304949/ --exclude "*.html" --cache-control "no-cache" --region us-east-1 --no-progress
 aws s3 cp dist/ s3://treverse-website-347888304949/ --recursive --exclude "*" --include "*.html" --content-type "text/html; charset=utf-8" --cache-control "no-cache" --region us-east-1 --no-progress
+aws cloudfront create-invalidation --distribution-id E1Y0INJRF5BAJA --paths "/*"
 ```
 
-Confirm the identity command reports account `347888304949`. If you move to a named profile, append `--profile YOUR_PROFILE` to the AWS commands. There is no CloudFront distribution to invalidate for this deployment. The exact website configuration and public-read policy are saved in `deploy/s3-website.json` and `deploy/s3-public-read-policy.json`; the policy is scoped to this bucket.
+Confirm the identity command reports account `347888304949`. If you move to a named profile, append `--profile YOUR_PROFILE` to AWS commands. Configuration snapshots and identifiers are in `deploy/aws-resources.json`, `deploy/cloudfront-distribution.json`, and `deploy/s3-cloudfront-policy.json`. These contain no credentials. Do not recreate the distribution to publish content updates.
 
-The general instructions below remain available for setting up another bucket or moving to CloudFront.
+### Connect the Treverse domain using GCP DNS
+
+**Do not repoint website traffic until the certificate is issued and attached to CloudFront with the custom domain aliases.** Adding validation records first leaves the existing Framer site in place.
+
+1. In the GCP public DNS zone for `treversellc.com`, add these two records with TTL `300`. Names and targets are fully qualified; avoid appending the zone name a second time if the console already supplies it.
+
+   | Type | Name | Target |
+   | --- | --- | --- |
+   | CNAME | `_b4581b275dfa961d12fc9e6fc8dbead8.www.treversellc.com.` | `_f9b3ed4e4dbee56ce4ea3b1a5235054c.wzccmgtwzk.acm-validations.aws.` |
+   | CNAME | `_1f221a8b0338070752c03dff328b98e0.treversellc.com.` | `_54aa10c25fd2209c12b833b44d270e3a.wzccmgtwzk.acm-validations.aws.` |
+
+   These records are also in `deploy/acm-validation-records.json`. Keep them for automatic certificate renewal. [AWS DNS validation](https://docs.aws.amazon.com/acm/latest/userguide/dns-validation.html).
+
+2. Confirm the certificate is `ISSUED`:
+
+   ```sh
+   aws acm describe-certificate --certificate-arn arn:aws:acm:us-east-1:347888304949:certificate/8a3e8e06-6b1f-4db5-b725-994fcf13160b --region us-east-1 --query 'Certificate.Status' --output text
+   ```
+
+3. In CloudFront distribution `E1Y0INJRF5BAJA`, attach that certificate and add both alternate domain names: `www.treversellc.com` and `treversellc.com`. Use SNI and a minimum TLS 1.2 policy. Wait until the distribution status is `Deployed` before changing the website DNS. The certificate must be in `us-east-1` and cover both aliases. [CloudFront certificate requirements](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/cnames-and-https-requirements.html).
+
+4. Change `www.treversellc.com` to a **CNAME** targeting `d38l62u264f56m.cloudfront.net.` (TTL 300). Replace conflicting website records for `www`, while preserving certificate validation and email records.
+
+5. The bare domain `treversellc.com` cannot use a standard CNAME at the zone apex. Google Cloud DNS supports an apex **ALIAS** pointing to `d38l62u264f56m.cloudfront.net.`, but ALIAS is incompatible with DNSSEC and must be configured through the gcloud CLI or API rather than the console. If DNSSEC is enabled, keep it enabled and arrange a compatible apex redirect or DNS-provider setup instead. Confirm the zone configuration before replacing existing apex website records. Do not copy CloudFront's resolved IPs into static A records. [Google Cloud DNS record types](https://docs.cloud.google.com/dns/docs/records-overview).
+
+6. Verify HTTPS on both domain names and direct navigation to `/about/`, `/locations/`, and `/jobs/`. Keep Framer available until that verification succeeds. Current canonical metadata prefers `www.treversellc.com`; the apex serves the same content unless an apex-to-www redirect is added later.
+
+The general instructions below are for a new deployment. **Do not apply the public-bucket option to the current private CloudFront origin.**
 
 ## One-time AWS setup
 

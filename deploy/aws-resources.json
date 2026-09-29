@@ -1,0 +1,16 @@
+{
+  "region": "us-east-1",
+  "bucket": "treverse-website-347888304949",
+  "distributionId": "E1Y0INJRF5BAJA",
+  "distributionDomain": "d38l62u264f56m.cloudfront.net",
+  "originAccessControlId": "E4WJ5BQGIG4MY",
+  "routingFunctionName": "treverse-website-routing",
+  "certificateArn": "arn:aws:acm:us-east-1:347888304949:certificate/8a3e8e06-6b1f-4db5-b725-994fcf13160b",
+  "customDomains": [
+    "www.treversellc.com",
+    "treversellc.com"
+  ],
+  "customDomainStatus": "pending www DNS validation; apex validation succeeded; aliases not attached",
+  "distributionStatus": "Deployed",
+  "originAccess": "private: public access fully blocked; CloudFront OAC only"
+}
