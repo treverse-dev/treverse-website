@@ -1,7 +1,9 @@
-.PHONY: build dev check
+.PHONY: build dev preview check
 build:
-	python3 scripts/build.py
+	npm run build
 dev:
-	python3 -m http.server 4173 --directory dist
+	npm run dev
+preview:
+	npm run preview
 check:
-	python3 scripts/check.py
+	npm run check

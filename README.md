@@ -1,31 +1,54 @@
 # Treverse website
 
-A standalone, responsive rebuild of https://www.treversellc.com/. The deployable website is in `dist/`: ordinary HTML, CSS, images, and a locally hosted Esteban font. No Framer account, JavaScript runtime, npm install, database, or paid framework is required to serve it.
+A simple React + Vite website. No server, Python, Framer, or Sites hosting is needed. Build it and upload `dist/` to an S3 bucket serving the root of your domain.
 
-## Preview and edit
+## Develop and build
 
-- `make dev` (or `npm run dev`) serves http://localhost:4173.
-- Edit page content and shared markup in `scripts/build.py`.
-- Edit styles directly in `dist/styles.css`; the page generator preserves styles and assets.
-- `make build` regenerates HTML, robots.txt, and the sitemap.
-- `make check` verifies routes, assets, metadata, and internal navigation.
+Requires Node.js 20.19+ (20.x) or 22.12+ and npm.
 
-Python 3 is only used for generation and the local preview; the hosted site needs no Python. Commit the generated `dist/` files along with the generator.
+```sh
+npm ci
+npm run dev
+npm run build
+npm run preview
+```
 
-## Hosting and domain migration
+`npm run check` builds the app and validates page entry points, bundled references, and the optional CloudFront routing function. Equivalent `make` targets are available.
 
-Upload the **contents** of `dist/` to any static web host. Configure directory indexes and the custom `404.html`; keep `/about`, `/locations`, and `/jobs` working with or without a trailing slash. No SPA fallback is needed. Cloudflare Pages, Netlify, and ordinary Nginx/Apache hosting can serve this output.
+## Source structure
 
-A private Sites preview is configured separately in `.openai/hosting.json`. The website is portable and does not require that host. Production canonicals and sitemap intentionally retain `https://www.treversellc.com`.
+- `src/pages/`: React components for Home, About, Locations, Jobs, and the error page.
+- `src/App.jsx`: shared navigation, footer, and page selection.
+- `src/styles.css`: responsive styling.
+- `public/assets/`: local photos, logos, and font.
+- `index.html`, `about/index.html`, `locations/index.html`, `jobs/index.html`, `404.html`: HTML entry points with page-specific metadata.
+- `public/robots.txt` and `public/sitemap.xml`: production indexing metadata.
 
-Before replacing Framer:
-1. Confirm location details, current job availability, and the 500+ monthly truckload claim with the business owner.
-2. Check the existing A-Stock newsletter, LinkedIn, and Notion application destinations; they are preserved from the current site and are owned externally.
-3. Deploy to the chosen production host and test all four routes, mobile layouts, links, and the error page.
-4. Attach `www.treversellc.com` and the apex domain, using the host's exact DNS records. Preserve MX/TXT email records. Set a single canonical www redirect and verify HTTPS.
-5. Keep the Framer site available until DNS and the production checks succeed, then cancel Framer hosting if desired.
+The app uses normal links and separate HTML entry points rather than client-side routing. Vite bundles React and copies public assets into `dist/`. Do not edit `dist/`; it is regenerated on each build. Changes to page titles/descriptions belong in the corresponding HTML entry point. The page contents are rendered by React in the browser.
 
-No DNS, existing hosting, email, or Framer subscriptions were changed by this rebuild.
+## Upload to S3
+
+After configuring the target bucket and AWS CLI credentials:
+
+```sh
+npm ci
+npm run check
+aws s3 sync dist/ s3://YOUR_BUCKET_NAME/ --cache-control "no-cache"
+```
+
+Upload the **contents** of `dist/`, not the enclosing directory. The command deliberately retains old objects so it cannot remove unrelated bucket contents or assets used by already-open pages. No AWS upload is performed by the build.
+
+For an **S3 website endpoint**, configure `index.html` as the index document and `404.html` as the error document. Nested entries such as `about/index.html` support `/about/` and direct page refreshes. Website endpoint access permissions must already be configured. See [AWS index-document behavior](https://docs.aws.amazon.com/AmazonS3/latest/userguide/IndexDocumentSupport.html).
+
+For **CloudFront with a private S3 REST origin**, set the default root object to `index.html`, configure origin access control, and associate `deploy/cloudfront-function.js` with the viewer-request event. S3 REST origins do not automatically resolve nested directory indexes; the function maps known page URLs to their exact object keys. Configure custom 403/404 responses to `/404.html` with response code 404. See [AWS CloudFront URL rewriting](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/example_cloudfront_functions_url_rewrite_single_page_apps_section.html).
+
+If a CloudFront distribution already caches a previous deployment, invalidate it after upload:
+
+```sh
+aws cloudfront create-invalidation --distribution-id YOUR_DISTRIBUTION_ID --paths "/*"
+```
+
+Use CloudFront for HTTPS on a custom domain. Production canonical URLs and the sitemap retain `https://www.treversellc.com`. Attach the domain only after validating the deployment; preserve existing email DNS records. No AWS resources, domain records, or Framer subscriptions have been changed.
 
 ## Content review notes
 
@@ -35,7 +58,6 @@ Source captured September 29, 2026:
 - The old location heading “Paducah, TN” was normalized to **Paducah, KY** to match its published address.
 - Bartlett's published address is `1981 Fletcher Creek Dr, Memphis, TN 37133`. That ZIP code and the Bartlett/Memphis naming need owner verification; the address was preserved.
 - Marketing copy was lightly edited for readability. No new contact email or business performance claims were invented.
-- Static checks ran; browser visual and interaction QA have not been completed.
 
 ## Asset provenance
 
