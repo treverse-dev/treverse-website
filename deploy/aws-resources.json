@@ -10,7 +10,8 @@
     "www.treversellc.com",
     "treversellc.com"
   ],
-  "customDomainStatus": "pending www DNS validation; apex validation succeeded; aliases not attached",
+  "customDomainStatus": "certificate issued; both aliases deployed; ready for GCP website DNS cutover",
   "distributionStatus": "Deployed",
-  "originAccess": "private: public access fully blocked; CloudFront OAC only"
+  "originAccess": "private: public access fully blocked; CloudFront OAC only",
+  "certificateStatus": "ISSUED"
 }

@@ -1,52 +1,66 @@
 {
   "CallerReference": "treverse-website-20260929-https",
-  "Comment": "Treverse website - S3 static React build",
-  "Enabled": true,
-  "IsIPV6Enabled": true,
-  "HttpVersion": "http2and3",
-  "PriceClass": "PriceClass_100",
-  "DefaultRootObject": "index.html",
   "Aliases": {
-    "Quantity": 0
+    "Quantity": 2,
+    "Items": [
+      "www.treversellc.com",
+      "treversellc.com"
+    ]
   },
+  "DefaultRootObject": "index.html",
   "Origins": {
     "Quantity": 1,
     "Items": [
       {
         "Id": "treverse-s3",
         "DomainName": "treverse-website-347888304949.s3.us-east-1.amazonaws.com",
+        "OriginPath": "",
+        "CustomHeaders": {
+          "Quantity": 0
+        },
         "S3OriginConfig": {
           "OriginAccessIdentity": ""
+        },
+        "ConnectionAttempts": 3,
+        "ConnectionTimeout": 10,
+        "OriginShield": {
+          "Enabled": false
         },
         "OriginAccessControlId": "E4WJ5BQGIG4MY"
       }
     ]
   },
+  "OriginGroups": {
+    "Quantity": 0
+  },
   "DefaultCacheBehavior": {
     "TargetOriginId": "treverse-s3",
-    "ViewerProtocolPolicy": "redirect-to-https",
-    "AllowedMethods": {
-      "Quantity": 2,
-      "Items": [
-        "GET",
-        "HEAD"
-      ],
-      "CachedMethods": {
-        "Quantity": 2,
-        "Items": [
-          "GET",
-          "HEAD"
-        ]
-      }
-    },
-    "Compress": true,
-    "CachePolicyId": "4135ea2d-6df8-44a3-9df3-4b5a84be39ad",
     "TrustedSigners": {
       "Enabled": false,
       "Quantity": 0
     },
     "TrustedKeyGroups": {
       "Enabled": false,
+      "Quantity": 0
+    },
+    "ViewerProtocolPolicy": "redirect-to-https",
+    "AllowedMethods": {
+      "Quantity": 2,
+      "Items": [
+        "HEAD",
+        "GET"
+      ],
+      "CachedMethods": {
+        "Quantity": 2,
+        "Items": [
+          "HEAD",
+          "GET"
+        ]
+      }
+    },
+    "SmoothStreaming": false,
+    "Compress": true,
+    "LambdaFunctionAssociations": {
       "Quantity": 0
     },
     "FunctionAssociations": {
@@ -57,7 +71,12 @@
           "EventType": "viewer-request"
         }
       ]
-    }
+    },
+    "FieldLevelEncryptionId": "",
+    "CachePolicyId": "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
+  },
+  "CacheBehaviors": {
+    "Quantity": 0
   },
   "CustomErrorResponses": {
     "Quantity": 2,
@@ -76,13 +95,29 @@
       }
     ]
   },
+  "Comment": "Treverse website - S3 static React build",
+  "Logging": {
+    "Enabled": false,
+    "IncludeCookies": false,
+    "Bucket": "",
+    "Prefix": ""
+  },
+  "PriceClass": "PriceClass_100",
+  "Enabled": true,
   "ViewerCertificate": {
-    "CloudFrontDefaultCertificate": true
+    "ACMCertificateArn": "arn:aws:acm:us-east-1:347888304949:certificate/8a3e8e06-6b1f-4db5-b725-994fcf13160b",
+    "SSLSupportMethod": "sni-only",
+    "MinimumProtocolVersion": "TLSv1.2_2021"
   },
   "Restrictions": {
     "GeoRestriction": {
       "RestrictionType": "none",
       "Quantity": 0
     }
-  }
+  },
+  "WebACLId": "",
+  "HttpVersion": "http2and3",
+  "IsIPV6Enabled": true,
+  "ContinuousDeploymentPolicyId": "",
+  "Staging": false
 }

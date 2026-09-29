@@ -61,9 +61,9 @@ AWS resources created September 29, 2026:
 | CLI profile | Configured default profile (no `--profile` flag) |
 | Origin access control | `E4WJ5BQGIG4MY` |
 | Routing function | `treverse-website-routing` (LIVE, viewer-request) |
-| Custom domain | Apex validation succeeded; www validation and alias attachment pending; website DNS unchanged |
+| Custom domain | Certificate issued; both domain aliases deployed and HTTPS verified; ready for DNS cutover |
 
-CloudFront redirects HTTP to HTTPS, resolves each static page route, and serves a custom 404. S3 access is restricted to this distribution through signed origin requests. The original public S3 website URL is no longer the delivery URL. The default CloudFront hostname has a working AWS-managed certificate; the Treverse-domain certificate has separate DNS validation below.
+CloudFront redirects HTTP to HTTPS, resolves each static page route, and serves a custom 404. S3 access is restricted to this distribution through signed origin requests. The original public S3 website URL is no longer the delivery URL. The default CloudFront hostname has a working AWS-managed certificate; the Treverse-domain certificate is also issued and attached for both domain names.
 
 ### Deploy another local build
 
@@ -80,7 +80,7 @@ Confirm the identity command reports account `347888304949`. If you move to a na
 
 ### Connect the Treverse domain using GCP DNS
 
-**Do not repoint website traffic until the certificate is issued and attached to CloudFront with the custom domain aliases.** Adding validation records first leaves the existing Framer site in place.
+**Certificate validation and alias attachment are complete, and CloudFront reports `Deployed`.** HTTPS was verified for both names directly against CloudFront without changing public website DNS. Proceed to steps 4–6 to switch website traffic. Steps 1–3 document the completed setup. Keep both validation CNAME records for renewal.
 
 1. In the GCP public DNS zone for `treversellc.com`, add these two records with TTL `300`. Names and targets are fully qualified; avoid appending the zone name a second time if the console already supplies it.
 
