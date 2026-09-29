@@ -24,7 +24,7 @@ npm run preview
 - `index.html`, `about/index.html`, `locations/index.html`, `jobs/index.html`, `404.html`: HTML entry points with page-specific metadata.
 - `public/robots.txt` and `public/sitemap.xml`: production indexing metadata.
 
-The app uses normal links and separate HTML entry points rather than client-side routing. Vite bundles React and copies public assets into `dist/`. Do not edit `dist/`; it is regenerated on each build. Changes to page titles/descriptions belong in the corresponding HTML entry point. The page contents are rendered by React in the browser.
+The app uses normal links and separate HTML entry points rather than client-side routing. Vite bundles React and copies public assets into `dist/`. Do not edit `dist/`; it is regenerated on each build. Changes to page titles/descriptions belong in the corresponding HTML entry point. The build pre-renders every page from the React components into HTML. Content, navigation, FAQs, and external links work before JavaScript loads; React hydrates the same markup in the browser. No server runtime or extra framework is deployed. The temporary build-time renderer is removed after each build.
 
 ## Upload to S3
 
@@ -50,14 +50,22 @@ aws cloudfront create-invalidation --distribution-id YOUR_DISTRIBUTION_ID --path
 
 Use CloudFront for HTTPS on a custom domain. Production canonical URLs and the sitemap retain `https://www.treversellc.com`. Attach the domain only after validating the deployment; preserve existing email DNS records. No AWS resources, domain records, or Framer subscriptions have been changed.
 
-## Content review notes
+## Content and launch review
 
-Source captured September 29, 2026:
-- Home, About, Locations, and Jobs from the current Treverse website.
-- All three engineering positions remain marked **Position filled**. Resume submissions continue to use the existing Notion destination; no new application backend was invented.
-- The old location heading “Paducah, TN” was normalized to **Paducah, KY** to match its published address.
-- Bartlett's published address is `1981 Fletcher Creek Dr, Memphis, TN 37133`. That ZIP code and the Bartlett/Memphis naming need owner verification; the address was preserved.
-- Marketing copy was lightly edited for readability. No new contact email or business performance claims were invented.
+Reviewed September 29, 2026:
+- The live marketplace at https://astock.com identifies itself as Haggle. Business pages now focus on Treverse services, with a separate shopper route to Haggle. No parent/subsidiary relationship is asserted without owner confirmation.
+- Facebook uses the owner-provided https://www.facebook.com/hagglebids. Instagram and YouTube retain the exact handles linked from the current Haggle marketplace; update `src/site.js` if replacements are supplied.
+- `src/data/locations.js` reflects the 14 locations listed at https://astock.com/locations. The old Bartlett address is absent from that directory; this does not imply it is closed. Johnson City is now listed as 2506 S Roan St; Ohio is Princeton Pike. New locations and FHL Cookeville are included.
+- Rainsville is the marketplace's location label, while its address says Fort Payne. Its published ZIP 35698 needs confirmation and has been omitted rather than replaced with a guess.
+- The 500+ monthly truckload claim and filled job advertisements were removed. Careers provides the existing resume invitation without implying a current opening.
+- The About page uses the existing actual pickup-entrance photo with an honest A-Stock signage caption. Other existing imagery is illustrative; no team photos or customer results have been fabricated.
+
+Pending owner information:
+1. Set `businessEmail` in `src/site.js` to the confirmed business inquiry address. Until supplied, no email link or nonfunctional form is shown. The business inquiry section is ready; its email action appears when configured.
+2. Confirm the intended wording for Treverse's relationship to Haggle and A-Stock, any updated social accounts, and any location corrections.
+3. Supply approved facility/team photos and case-study metrics before adding customer outcomes or testimonials.
+
+The S3 build remains runnable while these editorial inputs are pending. No live domain, AWS resources, or external accounts have been changed.
 
 ## Asset provenance
 

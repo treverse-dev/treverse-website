@@ -1,3 +1,4 @@
+import { site } from './site.js';
 import Home from './pages/Home.jsx';
 import About from './pages/About.jsx';
 import Locations from './pages/Locations.jsx';
@@ -7,7 +8,7 @@ import NotFound from './pages/NotFound.jsx';
 const pages = { home: Home, about: About, locations: Locations, jobs: Jobs, 'not-found': NotFound };
 const navigation = [['about', 'About'], ['locations', 'Locations'], ['jobs', 'Jobs']];
 
-export default function App({ page = 'home' }) {
+export default function App({ page = 'home', year = new Date().getFullYear() }) {
   const Content = pages[page] ?? NotFound;
   return (
     <>
@@ -30,12 +31,10 @@ export default function App({ page = 'home' }) {
         <div className="shell footer-row">
           <div className="footer-brand">
             <a className="wordmark" href="/">Treverse LLC</a>
-            <p>© {new Date().getFullYear()} Treverse LLC. All rights reserved.</p>
+            <p>© {year} Treverse LLC. All rights reserved.</p>
           </div>
-          <nav className="social" aria-label="Social media">
-            <a href="https://www.facebook.com/AStockAuctions/">Facebook</a>
-            <a href="https://www.instagram.com/_a_stock/">Instagram</a>
-            <a href="https://www.youtube.com/@AStockBids">YouTube</a>
+          <nav className="social" aria-label="Marketplace social media">
+            {site.social.map(({ label, url }) => <a key={label} href={url}>{label}</a>)}
           </nav>
         </div>
       </footer>

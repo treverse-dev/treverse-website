@@ -1,3 +1,6 @@
+import BusinessContact from '../components/BusinessContact.jsx';
+import { site } from '../site.js';
+
 export default function Home() {
   return (
     <div className="shell">
@@ -16,6 +19,7 @@ export default function Home() {
           <p>
             {"Treverse LLC partners with retailers, logistics companies, and importers to give a second life to obsolete inventory—from customer returns and seasonal stock to liquidation events and inventory pulls."}
           </p>
+          <div className="hero-actions"><a className="button" href="#business-contact">Explore a partnership <span aria-hidden="true">↓</span></a><a className="text-link" href={site.marketplaceUrl}>Looking to shop? Visit Haggle.</a></div>
         </div>
       </section>
       <section aria-labelledby="services-title">
@@ -29,7 +33,7 @@ export default function Home() {
             </h2>
           </div>
           <p>
-            {"Since 2020, we have been building an ecosystem to provide the RMS tooling needed for the biggest recovery across all verticals."}
+            {"Distribution, export, inventory visibility, and retail channels work together to give returned and excess products a path back to market."}
           </p>
         </div>
         <div className="services">
@@ -105,18 +109,13 @@ export default function Home() {
               <span className="eyebrow">
                 {"03 / Our services"}
               </span>
-              <h2>
-                {"RMS"}
-              </h2>
+              <h2>Inventory management</h2>
               <ul>
                 <li>
                   {"Visibility throughout the product lifecycle"}
                 </li>
                 <li>
                   {"Standard and custom reporting"}
-                </li>
-                <li>
-                  {"Currently processing 500+ truckloads monthly"}
                 </li>
                 <li>
                   {"Custom operational plans"}
@@ -137,11 +136,12 @@ export default function Home() {
                 {"04 / Our services"}
               </span>
               <h2>
-                {"B2C"}
+                {"Retail & marketplace"}
               </h2>
+              <p className="service-description">Connect products with shoppers through Haggle, the marketplace at astock.com, and our retail channels.</p>
               <ul>
                 <li>
-                  {"A-Stock online marketplace"}
+                  {"Haggle online marketplace"}
                 </li>
                 <li>
                   {"Revenue share with item-level sales reporting"}
@@ -153,8 +153,8 @@ export default function Home() {
                   {"Other specialties"}
                 </li>
               </ul>
-              <a className="button" href="https://astock.com">
-                {"Read more"}
+              <a className="button" href={site.marketplaceUrl}>
+                {"Shop Haggle"}
                 <span aria-hidden="true">
                   {"↗"}
                 </span>
@@ -164,17 +164,7 @@ export default function Home() {
           </article>
         </div>
       </section>
-      <section className="cta">
-        <h2>
-          {"Want to work with us?"}
-        </h2>
-        <a className="button" href="/jobs/">
-          {"Explore careers"}
-          <span aria-hidden="true">
-            {"↗"}
-          </span>
-        </a>
-      </section>
+      <BusinessContact />
     </div>
   );
 }

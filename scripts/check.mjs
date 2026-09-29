@@ -8,10 +8,15 @@ for (const route of ['index.html', 'about/index.html', 'locations/index.html', '
   assert.match(html, /<title>.+<\/title>/, `Missing title: ${route}`);
   assert.match(html, /name="description"/, `Missing description: ${route}`);
   assert.match(html, /id="root" data-page="[a-z-]+"/, `Missing React page: ${route}`);
+  assert.equal((html.match(/<h1(?: |>)/g) ?? []).length, 1, `Missing prerendered heading: ${route}`);
+  assert.match(html, /<main id="main">.+<\/main>/, `Missing prerendered content: ${route}`);
+  assert.match(html, /<footer/, `Missing prerendered footer: ${route}`);
   assert.match(html, /type="module"/, `Missing built JavaScript: ${route}`);
   for (const [, path] of html.matchAll(/(?:src|href)="(\/[^"#]+)"/g)) {
-    await access(join('dist', path.slice(1)));
+    const local = path.split('#')[0];
+    await access(join('dist', local.endsWith('/') ? `${local.slice(1)}index.html` : local.slice(1)));
   }
+  assert.doesNotMatch(html, /500\+|Position filled|Please enable JavaScript/, `Outdated content: ${route}`);
   assert.doesNotMatch(html, /framerusercontent|\/src\/main/, `Unbundled dependency: ${route}`);
 }
 const source = await readFile('deploy/cloudfront-function.js', 'utf8');
