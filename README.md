@@ -61,7 +61,7 @@ AWS resources created September 29, 2026:
 | CLI profile | Configured default profile (no `--profile` flag) |
 | Origin access control | `E4WJ5BQGIG4MY` |
 | Routing function | `treverse-website-routing` (LIVE, viewer-request) |
-| Custom domain | Certificate issued; both domain aliases deployed and HTTPS verified; ready for DNS cutover |
+| Custom domain | Certificate issued; both aliases deployed; GCP www CNAME and apex ALIAS point to CloudFront |
 
 CloudFront redirects HTTP to HTTPS, resolves each static page route, and serves a custom 404. S3 access is restricted to this distribution through signed origin requests. The original public S3 website URL is no longer the delivery URL. The default CloudFront hostname has a working AWS-managed certificate; the Treverse-domain certificate is also issued and attached for both domain names.
 
@@ -80,7 +80,7 @@ Confirm the identity command reports account `347888304949`. If you move to a na
 
 ### Connect the Treverse domain using GCP DNS
 
-**Certificate validation and alias attachment are complete, and CloudFront reports `Deployed`.** HTTPS was verified for both names directly against CloudFront without changing public website DNS. Proceed to steps 4–6 to switch website traffic. Steps 1–3 document the completed setup. Keep both validation CNAME records for renewal.
+**The DNS cutover is complete.** GCP authoritative DNS and Google public DNS return CloudFront for the apex, and www serves the website over HTTPS. Older resolver caches may briefly retain the former Framer apex address. The steps below document the completed setup. Keep both validation CNAME records for renewal.
 
 1. In the GCP public DNS zone for `treversellc.com`, add these two records with TTL `300`. Names and targets are fully qualified; avoid appending the zone name a second time if the console already supplies it.
 
@@ -101,7 +101,7 @@ Confirm the identity command reports account `347888304949`. If you move to a na
 
 4. Change `www.treversellc.com` to a **CNAME** targeting `d38l62u264f56m.cloudfront.net.` (TTL 300). Replace conflicting website records for `www`, while preserving certificate validation and email records.
 
-5. The bare domain `treversellc.com` cannot use a standard CNAME at the zone apex. Google Cloud DNS supports an apex **ALIAS** pointing to `d38l62u264f56m.cloudfront.net.`, but ALIAS is incompatible with DNSSEC and must be configured through the gcloud CLI or API rather than the console. If DNSSEC is enabled, keep it enabled and arrange a compatible apex redirect or DNS-provider setup instead. Confirm the zone configuration before replacing existing apex website records. Do not copy CloudFront's resolved IPs into static A records. [Google Cloud DNS record types](https://docs.cloud.google.com/dns/docs/records-overview).
+5. The bare domain `treversellc.com` cannot use a standard CNAME at the zone apex. Google Cloud DNS supports an apex **ALIAS** pointing to `d38l62u264f56m.cloudfront.net.`, and the current GCP console supports creating this record (verified during this migration), as do the gcloud CLI and API. ALIAS is incompatible with DNSSEC. If DNSSEC is enabled, keep it enabled and arrange a compatible apex redirect or DNS-provider setup instead. Confirm the zone configuration before replacing existing apex website records. Do not copy CloudFront's resolved IPs into static A records. [Google Cloud DNS record types](https://docs.cloud.google.com/dns/docs/records-overview).
 
 6. Verify HTTPS on both domain names and direct navigation to `/about/`, `/locations/`, and `/jobs/`. Keep Framer available until that verification succeeds. Current canonical metadata prefers `www.treversellc.com`; the apex serves the same content unless an apex-to-www redirect is added later.
 
@@ -244,7 +244,7 @@ Pending owner information:
 2. Confirm the intended wording for Treverse's relationship to Haggle and A-Stock, any updated social accounts, and any location corrections.
 3. Supply approved facility/team photos and case-study metrics before adding customer outcomes or testimonials.
 
-The S3 build remains runnable while these editorial inputs are pending. The current S3 deployment is documented above. The existing live domain and other external accounts remain unchanged.
+The S3 build remains runnable while these editorial inputs are pending. The current S3 deployment is documented above. The website domain now points to CloudFront; unrelated external accounts remain unchanged.
 
 ## Asset provenance
 

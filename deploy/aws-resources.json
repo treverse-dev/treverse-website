@@ -10,7 +10,7 @@
     "www.treversellc.com",
     "treversellc.com"
   ],
-  "customDomainStatus": "certificate issued; both aliases deployed; ready for GCP website DNS cutover",
+  "customDomainStatus": "certificate issued; both aliases deployed; GCP www CNAME and apex ALIAS configured and verified at authoritative DNS",
   "distributionStatus": "Deployed",
   "originAccess": "private: public access fully blocked; CloudFront OAC only",
   "certificateStatus": "ISSUED"
