@@ -2,18 +2,40 @@
 
 A simple React + Vite website. No server, Python, Framer, or Sites hosting is needed. Build it and upload `dist/` to an S3 bucket serving the root of your domain.
 
-## Develop and build
+## Build locally
 
-Requires Node.js 20.19+ (20.x) or 22.12+ and npm.
+Requirements: Node.js 20.19+ (20.x) or 22.12+, npm, and AWS CLI v2 for uploading. Run these commands from this repository's root.
 
 ```sh
 npm ci
-npm run dev
-npm run build
+npm run check
+```
+
+`npm run check` creates the production build and validates the generated pages, assets, and CloudFront route mapping. To build without those checks, use `npm run build`.
+
+Preview the **production build** locally:
+
+```sh
 npm run preview
 ```
 
-`npm run check` builds the app and validates page entry points, bundled references, and the optional CloudFront routing function. Equivalent `make` targets are available.
+Open the URL printed by Vite (normally http://127.0.0.1:4173). Press Ctrl+C to stop. For development with automatic reload, use `npm run dev` instead. Neither command uploads anything.
+
+The generated output is:
+
+```text
+dist/
+  index.html
+  about/index.html
+  locations/index.html
+  jobs/index.html
+  404.html
+  assets/                 # Bundled JS/CSS, images, and font
+  robots.txt
+  sitemap.xml
+```
+
+Deploy only the contents of `dist/`. Node.js and React's build-time renderer run on your computer; S3 serves the finished files. There is no application server to start in AWS. The build assumes the website is served at the root of its domain, not a subfolder. Equivalent `make` targets are available.
 
 ## Source structure
 
@@ -26,29 +48,127 @@ npm run preview
 
 The app uses normal links and separate HTML entry points rather than client-side routing. Vite bundles React and copies public assets into `dist/`. Do not edit `dist/`; it is regenerated on each build. Changes to page titles/descriptions belong in the corresponding HTML entry point. The build pre-renders every page from the React components into HTML. Content, navigation, FAQs, and external links work before JavaScript loads; React hydrates the same markup in the browser. No server runtime or extra framework is deployed. The temporary build-time renderer is removed after each build.
 
-## Upload to S3
+## One-time AWS setup
 
-After configuring the target bucket and AWS CLI credentials:
+Choose one hosting option:
+
+| Option | Delivery | Bucket access | Page routing |
+| --- | --- | --- | --- |
+| S3 website hosting | S3 website endpoint, HTTP only | Public read for website files | S3 resolves directory indexes |
+| S3 + CloudFront | HTTPS, with an optional custom domain | Private bucket with Origin Access Control | Included CloudFront function |
+
+For the public production domain, use CloudFront in front of S3. For direct S3 hosting, follow option A. Do not combine the public website endpoint with the private-origin instructions in option B. [AWS hosting overview](https://docs.aws.amazon.com/AmazonS3/latest/userguide/HostingWebsiteOnS3Setup.html).
+
+### Authenticate and select a bucket
+
+Configure your AWS CLI profile through your normal AWS login process. For an IAM Identity Center profile:
+
+```sh
+aws configure sso --profile treverse
+aws sso login --profile treverse
+aws sts get-caller-identity --profile treverse
+```
+
+If a profile already exists, use it instead of `treverse` throughout. Keep credentials outside this repository.
+
+Use a dedicated website bucket. Replace `YOUR_BUCKET_NAME` with its actual, globally unique name and `YOUR_REGION` with your region in every command. If it does not exist yet:
+
+```sh
+aws s3 mb s3://YOUR_BUCKET_NAME --region YOUR_REGION --profile treverse
+```
+
+Your deployment identity needs permission to list the bucket and upload objects. Hosting setup additionally needs permission to configure the bucket or CloudFront. The upload commands below do not delete objects or change access permissions.
+
+### Option A: Serve directly from an S3 website endpoint
+
+1. In the bucket's **Properties → Static website hosting**, enable website hosting with `index.html` as the index document and `404.html` as the error document. The equivalent command is:
+
+   ```sh
+   aws s3 website s3://YOUR_BUCKET_NAME --index-document index.html --error-document 404.html --profile treverse
+   ```
+
+2. In **Permissions → Block public access**, allow public bucket policies for this website bucket by disabling **BlockPublicPolicy** and **RestrictPublicBuckets**. Keep **BlockPublicAcls** and **IgnorePublicAcls** enabled; this workflow uses a bucket policy, not object ACLs. If organization/account settings prevent public policies, use option B.
+
+3. Add the following read-only bucket policy, replacing `YOUR_BUCKET_NAME`. These files will be publicly readable; keep only public website material in this bucket.
+
+   ```json
+   {
+     "Version": "2012-10-17",
+     "Statement": [{
+       "Sid": "PublicWebsiteRead",
+       "Effect": "Allow",
+       "Principal": "*",
+       "Action": "s3:GetObject",
+       "Resource": "arn:aws:s3:::YOUR_BUCKET_NAME/*"
+     }]
+   }
+   ```
+
+4. Upload the build using the next section. Open the **website endpoint** shown under Static website hosting, not an S3 REST object URL. `/about/`, `/locations/`, and `/jobs/` resolve to their own index files, including on refresh. Direct S3 website endpoints do not provide HTTPS. [AWS website permissions](https://docs.aws.amazon.com/AmazonS3/latest/userguide/WebsiteAccessPermissionsReqd.html).
+
+### Option B: Serve S3 through CloudFront with HTTPS
+
+1. Keep S3 **Block all public access enabled**, and leave S3 website hosting disabled. Create a CloudFront distribution using the bucket's regional **S3 REST origin**, not its website endpoint.
+2. Configure **Origin Access Control (OAC)** with request signing. Apply CloudFront's generated bucket policy, scoped to that distribution, to grant `s3:GetObject`. No public-read policy or upload ACL is needed. [AWS OAC instructions](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html).
+3. Set the distribution's **Default root object** to `index.html` and the viewer protocol policy to **Redirect HTTP to HTTPS**. Use the **CachingDisabled** cache policy initially for predictable updates.
+4. Create a CloudFront Function using JavaScript runtime 2.0 and paste `deploy/cloudfront-function.js`. Publish it to LIVE and associate it with the default behavior's **viewer-request** event. It maps `/about` and `/about/` to `/about/index.html`, and likewise for the other pages. A default root object alone does not handle nested directories. [AWS routing example](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/example_cloudfront_functions_url_rewrite_single_page_apps_section.html).
+5. Configure custom error responses for origin 403 and 404: response page `/404.html`, HTTP response code **404**, and error caching minimum TTL **0**. Do not return the homepage with status 200 for missing routes.
+6. Upload the build and test the distribution's HTTPS URL. To use `www.treversellc.com`, attach a matching certificate and alternate domain name to CloudFront, then point the domain's DNS to the distribution. Keep existing email DNS records. The canonical URLs and sitemap already use `https://www.treversellc.com`.
+
+## Upload a local build
+
+Run the following for each release. `npm ci` is needed on a fresh checkout or after the lockfile changes.
 
 ```sh
 npm ci
 npm run check
-aws s3 sync dist/ s3://YOUR_BUCKET_NAME/ --cache-control "no-cache"
+
+# Preview what will be uploaded without changing the bucket.
+aws s3 sync dist/ s3://YOUR_BUCKET_NAME/ --dryrun --profile treverse
+
+# Upload assets first so new HTML never references files that are not there yet.
+aws s3 sync dist/ s3://YOUR_BUCKET_NAME/ --exclude "*.html" --cache-control "no-cache" --profile treverse
+
+# Upload all HTML last, including nested pages, and explicitly refresh its metadata.
+aws s3 cp dist/ s3://YOUR_BUCKET_NAME/ --recursive --exclude "*" --include "*.html" --content-type "text/html; charset=utf-8" --cache-control "no-cache" --profile treverse
 ```
 
-Upload the **contents** of `dist/`, not the enclosing directory. The command deliberately retains old objects so it cannot remove unrelated bucket contents or assets used by already-open pages. No AWS upload is performed by the build.
+The trailing `dist/` uploads its contents at the bucket root. Do not upload the source folder, `node_modules`, or a directory named `dist` inside the bucket. Avoid `--acl public-read`; access comes from the selected hosting policy.
 
-For an **S3 website endpoint**, configure `index.html` as the index document and `404.html` as the error document. Nested entries such as `about/index.html` support `/about/` and direct page refreshes. Website endpoint access permissions must already be configured. See [AWS index-document behavior](https://docs.aws.amazon.com/AmazonS3/latest/userguide/IndexDocumentSupport.html).
+These commands deliberately omit `--delete`, retaining older hashed bundles for visitors with an already-open page. `sync` skips unchanged files, including metadata-only changes; to refresh cache metadata on existing non-HTML files, use `aws s3 cp dist/ s3://YOUR_BUCKET_NAME/ --recursive --exclude "*.html" --cache-control "no-cache" --profile treverse` once. `no-cache` permits storage but requires revalidation. [AWS sync behavior](https://docs.aws.amazon.com/cli/latest/reference/s3/sync.html).
 
-For **CloudFront with a private S3 REST origin**, set the default root object to `index.html`, configure origin access control, and associate `deploy/cloudfront-function.js` with the viewer-request event. S3 REST origins do not automatically resolve nested directory indexes; the function maps known page URLs to their exact object keys. Configure custom 403/404 responses to `/404.html` with response code 404. See [AWS CloudFront URL rewriting](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/example_cloudfront_functions_url_rewrite_single_page_apps_section.html).
-
-If a CloudFront distribution already caches a previous deployment, invalidate it after upload:
+If using CloudFront, refresh previously cached content after uploading:
 
 ```sh
-aws cloudfront create-invalidation --distribution-id YOUR_DISTRIBUTION_ID --paths "/*"
+aws cloudfront create-invalidation --distribution-id YOUR_DISTRIBUTION_ID --paths "/*" --profile treverse
 ```
 
-Use CloudFront for HTTPS on a custom domain. Production canonical URLs and the sitemap retain `https://www.treversellc.com`. Attach the domain only after validating the deployment; preserve existing email DNS records. No AWS resources, domain records, or Framer subscriptions have been changed.
+This command returns an invalidation ID. If you need to wait for completion:
+
+```sh
+aws cloudfront wait invalidation-completed --distribution-id YOUR_DISTRIBUTION_ID --id YOUR_INVALIDATION_ID --profile treverse
+```
+
+## Verify the deployed site
+
+Open the actual S3 website or CloudFront URL and check:
+
+- `/`, `/about/`, `/locations/`, and `/jobs/` load directly and after refreshing.
+- `/about`, `/locations`, and `/jobs` also resolve.
+- A nonexistent path shows the custom error page with HTTP status 404.
+- Images, fonts, footer links, mobile layout, and FAQ expansion work.
+- Page source includes the page content before JavaScript runs.
+
+Example HTTP checks (replace the origin with the exact endpoint):
+
+```sh
+curl -I https://YOUR_DISTRIBUTION_DOMAIN/about/
+curl -I https://YOUR_DISTRIBUTION_DOMAIN/this-page-does-not-exist
+```
+
+Use `http://` and the console-provided website hostname for direct S3 hosting. If all pages return 403, check the bucket policy/OAC and the uploaded object keys. If only nested pages fail through CloudFront, check the function's LIVE viewer-request association. If updates look stale, check the upload destination, cache policy, and invalidation status.
+
+The local build validates files, not your AWS permissions, DNS, or live hosting configuration. No AWS resources or domains have been modified by this repository's build commands.
 
 ## Content and launch review
 
