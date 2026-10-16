@@ -63,7 +63,7 @@ export const jobs = [
     subtitle: 'Marketplace Engineering',
     team: 'Engineering',
     summary: 'Expand the backend operations behind haggle.com, from React frontends to Kafka-driven event processing, on a microservices platform that is now being tuned and scaled.',
-    applyUrl: 'https://treverse.notion.site/3fb6db5f5eb681bb83fd000cafb5d3e9?pvs=105',
+    applyUrl: 'https://treverse.notion.site/fb73c6bc1b4d45c7a17e9815ed2e91e5?pvs=105',
     about: [
       'Haggle is a fast-growing alternative-logistics company giving surplus, returned, and overstock products a second life through our $1-start, real-time bidding platform. Every week, thousands of deep-discount shoppers compete to win inventory that would otherwise end up in landfills. By closing the loop between retailers, wholesalers, and value-conscious buyers, we keep products in use, reduce waste, and unlock new revenue streams for our partners.',
       'The core members of our company have been in the reverse logistics industry for over 20 years, and many of us have worked together for most of that time. When a customer returns an item, the seller sends it to us for liquidation. Tracking and processing that inventory takes specialized custom software, and that is what our engineering team designs, builds, and maintains.',
