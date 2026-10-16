@@ -7,7 +7,7 @@ export const jobs = [
     subtitle: 'Marketplace AI & Optimization',
     team: 'Applied Science',
     summary: 'Define and build the scientific foundation for Haggle’s AI-powered marketplace: pricing, recommendations, ranking, demand forecasting, inventory allocation, and shipping optimization.',
-    applyUrl: 'https://treverse.notion.site/3fb6db5f5eb6815fa6ea000c06614e4e?pvs=105',
+    applyUrl: 'https://treverse.notion.site/36c06ae1b66d4ad4bafc4bea82c08268?pvs=105',
     about: [
       'Haggle is a fast-growing alternative-logistics company giving surplus, returned, and overstock products a second life through our $1-start, real-time bidding platform. Every week, thousands of deep-discount shoppers compete to win inventory that would otherwise end up in landfills. By closing the loop between retailers, wholesalers, and value-conscious buyers, we keep products in use, reduce waste, and unlock new revenue streams for our partners.',
       'Our next chapter is focused on AI and machine learning: smarter user experiences, dynamic lot recommendations, predictive logistics, pricing intelligence, and marketplace optimization that make returning, reselling, and redeploying inventory friction-free.',
